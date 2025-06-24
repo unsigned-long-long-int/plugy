@@ -27,14 +27,7 @@ To install `plugy`, simply download the `plugy` executable script and place it i
 1.  **Download the `plugy` script:**
     ```bash
     # Example: If plugy script is available in a repo, fetch it
-    curl -o ~/.local/bin/plugy [https://raw.githubusercontent.com/your-username/plugy/main/plugy](https://raw.githubusercontent.com/your-username/plugy/main/plugy) # Replace with actual URL
-    chmod +x ~/.local/bin/plugy
-    ```
-    *(Ensure `~/.local/bin` is in your `$PATH`. If not, add `export PATH="$HOME/.local/bin:$PATH"` to your shell's config file, like `~/.bashrc` or `~/.zshrc`, and restart your terminal.)*
-
-2.  **Create the default plugin directory:**
-    ```bash
-    mkdir -p ~/.config/plugy
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/unsigned-long-long-int/plugy/refs/heads/main/install.sh)"
     ```
 
 ---
