@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 mkdir -p ~/.local/bin ~/.config/plugy/plugins
-wget -o ~/.local/bin/plugy https://raw.githubusercontent.com/unsigned-long-long-int/plugy/refs/heads/main/plugy
+wget -O ~/.local/bin/plugy https://raw.githubusercontent.com/unsigned-long-long-int/plugy/refs/heads/main/plugy
 chmod +x ~/.local/bin/plugy
 echo "Pluggy has been installed at ~/.local/bin/plugy. Ensure it is present in \$PATH"
