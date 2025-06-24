@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# Exit immediately if a command exits with a non-zero status.
+# Treat unset variables as an error.
+# The return value of a pipeline is the exit status of the last command
+# that returned a non-zero exit status, or zero if all commands succeeded.
+set -euo pipefail
+
 # Define the base directory for your plugins
 PLUGINS_DIR="$HOME/.config/plugy"
 
@@ -14,9 +20,13 @@ show_help() {
     echo "Run a custom makefile plugin from $PLUGINS_DIR/"
     echo ""
     echo "Options:"
-    echo "  -l, --list    List available plugins."
-    echo "  -h, --help    Display this help message."
-    echo "  -L, --license Display the license blurb."
+    echo "  -l, --list             List available plugins."
+    echo "  -i, --install <name> <url> Install a plugin from a URL."
+    echo "  -r, --remove <name>    Remove an installed plugin."
+    echo "  -e, --edit <name>      Open a plugin's Makefile in \$EDITOR."
+    echo "  -h, --help             Display this help message."
+    echo "  -L, --license          Display the license blurb."
+    echo ""
     exit 0
 }
 
@@ -24,22 +34,94 @@ show_help() {
 list_plugins() {
     echo "Available plugins in $PLUGINS_DIR/ (call with 'plugy <plugin_name>'):"
 
-    # Use a robust, portable method to list and format plugin names
-    local plugin_names=() # Using 'local' here as it's inside a function
+    local plugin_names=()
     while IFS= read -r -d $'\0' full_path; do
         filename=$(basename "$full_path")
         plugin_name="${filename%.mk}"
-        plugin_names+=("$plugin_name")
+        if [[ "$filename" == *.mk ]]; then
+            plugin_names+=("$plugin_name")
+        fi
     done < <(find "$PLUGINS_DIR" -maxdepth 1 -type f -name "*.mk" -print0)
 
-    # Print the sorted list of plugin names
     if [ ${#plugin_names[@]} -eq 0 ]; then
         echo "  No plugins found. Create .mk files in $PLUGINS_DIR/"
     else
-        printf "  %s\n" "${plugin_names[@]}" | sort
+        IFS=$'\n' sorted_plugins=($(sort <<<"${plugin_names[*]}"))
+        printf "  %s\n" "${sorted_plugins[@]}"
     fi
     echo ""
     exit 0
+}
+
+# --- Function to install a plugin ---
+install_plug() {
+    local name="$1"
+    local url="$2"
+
+    if [[ -z "$name" || -z "$url" ]]; then
+        echo "Error: --install requires a plugin name and a URL." >&2
+        echo "Usage: $(basename "$0") -i <plugin_name> <url_to_mk_file>" >&2
+        exit 1
+    fi
+
+    local dest="$PLUGINS_DIR/${name}.mk"
+
+    if [[ -e "$dest" ]]; then
+        echo "Error: Plugin '$name' already exists at $dest" >&2
+        exit 1
+    fi
+
+    echo "Installing plugin '$name' from $url..."
+    curl -fsSL --retry 3 --max-time 10 "$url" -o "$dest" || {
+        echo "Error: Failed to download plugin from $url" >&2
+        exit 1
+    }
+
+    echo "✅ Plugin '$name' installed to: $dest"
+    echo "Make sure to run plugy -e $name to update the config"
+    echo "Run it with: $(basename "$0") $name"
+    exit 0
+}
+
+# --- Function to uninstall a plugin ---
+uninstall_plug() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        echo "Error: --remove requires a plugin name." >&2
+        echo "Usage: $(basename "$0") --remove <plugin_name>" >&2
+        exit 1
+    fi
+    local dest_mk="$PLUGINS_DIR/${name}.mk"
+
+    local removed_any=0
+
+    if [[ -f "$dest_mk" ]]; then
+        echo "Removing plugin makefile '$name' from $dest_mk..."
+        if rm -v "$dest_mk"; then
+            echo "✅ Plugin makefile '$name' removed."
+            removed_any=1
+        else
+            echo "Error: Failed to remove plugin makefile '$name'." >&2
+            exit 1
+        fi
+    fi
+    
+    if [ "$removed_any" -eq 0 ]; then
+        echo "Error: Plugin '$name' (.mk file) not found." >&2
+        exit 1
+    fi
+    exit 0
+}
+
+# --- Function to edit a plugin ---
+edit() {
+    local plugin_file="$PLUGINS_DIR/$1.mk"
+    if [[ ! -f "$plugin_file" ]]; then
+        echo "Error: Plugin '$1' not found at $plugin_file" >&2
+        exit 1
+    fi
+
+    "${EDITOR:-nano}" "$plugin_file"
 }
 
 # --- Function to display license info ---
@@ -67,32 +149,69 @@ EOF
 }
 
 # --- Argument Parsing ---
-case "$1" in
-    -l|--list)
-        list_plugins
-        ;;
-    -h|--help)
-        show_help
-        ;;
-    -L|--license)
-        show_license
-        ;;
-    "") # No arguments provided
-        show_help # Default to showing help if no arguments are given
-        ;;
-    *) # Assume it's a plugin name
-        PLUGIN_NAME="$1"
-        PLUGIN_PATH="$PLUGINS_DIR/$PLUGIN_NAME.mk"
+PARSED_OPTIONS=$(getopt -n "$0" -o lihLr:e: --long "list,install:,help,license,remove:,edit:" -- "$@")
 
-        if [[ ! -f "$PLUGIN_PATH" ]]; then
-            echo "Error: Plugin makefile '$PLUGIN_PATH' not found." >&2
-            echo "Please ensure the .mk file exists in $PLUGINS_DIR." >&2
-            echo "Use 'plugy -l' to see available plugins or 'plugy -h' for help." >&2
+if [ $? -ne 0 ]; then
+    echo "Error: Invalid option." >&2
+    show_help
+fi
+
+eval set -- "$PARSED_OPTIONS"
+
+while true; do
+    case "$1" in
+        -l|--list)
+            list_plugins
+            ;;
+        -i|--install)
+            install_plug "$2" "$3"
+            shift 3
+            ;;
+        -r|--remove)
+            uninstall_plug "$2"
+            shift 2
+            ;;
+        -e|--edit)
+            edit "$2"
+            exit 0
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        -L|--license)
+            show_license
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Internal error: unrecognized option '$1'" >&2
             exit 1
-        fi
+            ;;
+    esac
+done
 
-        # Shift the first argument (plugin_name) so that "${@}" now contains only the targets
-        shift
-        make -f "$PLUGIN_PATH" "$@"
-        ;;
-esac
+# Run plugin if plugin name is provided (positional argument)
+if [ $# -eq 0 ]; then
+    show_help
+fi
+
+PLUGIN_NAME="$1"
+PLUGIN_PATH="$PLUGINS_DIR/$PLUGIN_NAME.mk"
+
+if [[ ! -f "$PLUGIN_PATH" ]]; then
+    echo "Error: Plugin makefile '$PLUGIN_PATH' not found." >&2
+    echo "Please ensure the .mk file exists in $PLUGINS_DIR." >&2
+    echo "Use 'plugy -l' to see available plugins or 'plugy -h' for help." >&2
+    exit 1
+fi
+
+shift
+
+make -f "$PLUGIN_PATH" "$@"
+
+if [ $? -ne 0 ]; then
+    echo "Error: Plugin '$PLUGIN_NAME' execution failed. Check the plugin's output above." >&2
+    exit 1
+fi
