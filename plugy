@@ -55,8 +55,8 @@ list_plugins() {
 
 # --- Function to install a plugin ---
 install_plug() {
-    local name="$1"
-    local url="$2"
+    local name="$2"
+    local url="$3"
 
     if [[ -z "$name" || -z "$url" ]]; then
         echo "Error: --install requires a plugin name and a URL." >&2
