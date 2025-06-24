@@ -144,13 +144,3 @@ To contribute, do the following:
  2. Add a new plugy plug-in, using sync.mk as a template
  3. Test on your machine
  4. Open a pull request
-
----
-
-## License
-
-This project is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0).
-
-If you want to use this project or parts of it in a **commercial context**, please contact me at [vmlinuz@duck.com](mailto:vmlinuz@duck.com) to request a waiver of the NonCommercial restriction.
-
-Please note that all other terms of the license, including Attribution and ShareAlike, still apply.
