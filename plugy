@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+# Define the base directory for your plugins
+PLUGINS_DIR="$HOME/.config/plugy"
+
+# --- Create plugin directory if it doesn't exist ---
+# This ensures 'find' won't fail with "No such file or directory"
+mkdir -p "$PLUGINS_DIR"
+
+# --- Function to display help message ---
+show_help() {
+    echo "Usage: $(basename "$0") [OPTIONS] <plugin_name> [target...]"
+    echo ""
+    echo "Run a custom makefile plugin from $PLUGINS_DIR/"
+    echo ""
+    echo "Options:"
+    echo "  -l, --list    List available plugins."
+    echo "  -h, --help    Display this help message."
+    echo "  -L, --license Display the license blurb."
+    exit 0
+}
+
+# --- Function to list available plugins ---
+list_plugins() {
+    echo "Available plugins in $PLUGINS_DIR/ (call with 'plugy <plugin_name>'):"
+
+    # Use a robust, portable method to list and format plugin names
+    local plugin_names=() # Using 'local' here as it's inside a function
+    while IFS= read -r -d $'\0' full_path; do
+        filename=$(basename "$full_path")
+        plugin_name="${filename%.mk}"
+        plugin_names+=("$plugin_name")
+    done < <(find "$PLUGINS_DIR" -maxdepth 1 -type f -name "*.mk" -print0)
+
+    # Print the sorted list of plugin names
+    if [ ${#plugin_names[@]} -eq 0 ]; then
+        echo "  No plugins found. Create .mk files in $PLUGINS_DIR/"
+    else
+        printf "  %s\n" "${plugin_names[@]}" | sort
+    fi
+    echo ""
+    exit 0
+}
+
+# --- Function to display license info ---
+show_license() {
+    cat << 'EOF'
+plugy Plugin Manager
+Copyright (c) 2025 Eli Thrash
+
+Licensed under the GNU General Public License v3.0 (GPLv3).
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+EOF
+    exit 0
+}
+
+# --- Argument Parsing ---
+case "$1" in
+    -l|--list)
+        list_plugins
+        ;;
+    -h|--help)
+        show_help
+        ;;
+    -L|--license)
+        show_license
+        ;;
+    "") # No arguments provided
+        show_help # Default to showing help if no arguments are given
+        ;;
+    *) # Assume it's a plugin name
+        PLUGIN_NAME="$1"
+        PLUGIN_PATH="$PLUGINS_DIR/$PLUGIN_NAME.mk"
+
+        if [[ ! -f "$PLUGIN_PATH" ]]; then
+            echo "Error: Plugin makefile '$PLUGIN_PATH' not found." >&2
+            echo "Please ensure the .mk file exists in $PLUGINS_DIR." >&2
+            echo "Use 'plugy -l' to see available plugins or 'plugy -h' for help." >&2
+            exit 1
+        fi
+
+        # Shift the first argument (plugin_name) so that "${@}" now contains only the targets
+        shift
+        make -f "$PLUGIN_PATH" "$@"
+        ;;
+esac
