@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-git clone https://github.com/unsigned-long-long-int/plugy.git
 mkdir -p ~/.local/bin ~/.config/plugy/plugins
-cp plugy/plugy ~/.local/bin/plugy
+wget -o ~/.local/bin/plugy https://raw.githubusercontent.com/unsigned-long-long-int/plugy/refs/heads/main/plugy
 chmod +x ~/.local/bin/plugy
 echo "Pluggy has been installed at ~/.local/bin/plugy. Ensure it is present in \$PATH"

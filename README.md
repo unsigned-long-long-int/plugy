@@ -22,14 +22,37 @@ When you invoke `plugy` from your command line, you specify the name of the plug
 
 ## Installation
 
-To install `plugy`, simply download the `plugy` executable script and place it in a directory that is included in your system's `PATH`.
+To install `plugy`, simply run this one liner. Feel free to read the source code, it's not much.
+1.  **Install dependencies**
+    - Ubuntu/Debian: 
+    ```bash
+    sudo apt install make curl
+    ```
+    - Arch:
+    ```bash
+    sudo pacman -Sy make curl
+    ```
+    - Alpine:
+    ```bash
+    doas apk add make curl
+    ```
 
-1.  **Download the `plugy` script:**
+
+2.  **Download the `plugy` script:**
     ```bash
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/unsigned-long-long-int/plugy/refs/heads/main/install.sh)"
     ```
 
 ---
+
+## Removal
+
+To uninstall `plugy`, simply run our all in one uninstall script.
+
+1.  **Download the `plugy` script:**
+    ```bash
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/unsigned-long-long-int/plugy/refs/heads/main/uninstall.sh)"
+    ```
 
 ## Let's Look at a plugy Plugin Example: `sync.mk`
 
