@@ -149,5 +149,4 @@ To contribute, do the following:
 
 ## License
 
-This project uses the
-We
+This project uses the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license primarily. If you need to redistribute this project in your own project and are using it for commercial purposes, you may email me at vmlinuz@duck.com for further information
