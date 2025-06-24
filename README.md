@@ -26,7 +26,6 @@ To install `plugy`, simply download the `plugy` executable script and place it i
 
 1.  **Download the `plugy` script:**
     ```bash
-    # Example: If plugy script is available in a repo, fetch it
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/unsigned-long-long-int/plugy/refs/heads/main/install.sh)"
     ```
 
